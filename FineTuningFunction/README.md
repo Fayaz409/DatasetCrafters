@@ -74,11 +74,65 @@ fine_tuner.load_model_and_tokenizer()
 fine_tuner.fine_tune()
 ```
 
-#### Text Generation
+### Using the `generate_text` Method for Inference Before and After Fine-Tuning
+
+The `FineTuner` class includes a `generate_text` method designed for generating text based on a given prompt. This method can be particularly useful for evaluating the performance of your model both before and after the fine-tuning process. It allows you to directly observe the impact of your fine-tuning efforts on the model's text generation capabilities.
+
+#### Method Overview
 
 ```python
-# Generate text with the fine-tuned model
+def generate_text(self, text, max_new_tokens=50):
+    inputs = self.tokenizer(text, return_tensors="pt").to(self.device)
+    outputs = self.model.generate(**inputs, max_new_tokens=max_new_tokens)
+    return self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+```
+
+- **Input**: The method takes a string of `text` as input, which serves as the prompt for text generation, and an optional `max_new_tokens` parameter that controls the maximum number of tokens to generate.
+- **Processing**: It tokenizes the input text, converts it into a format suitable for the model, generates output tokens in response to the input, and then decodes these tokens back into human-readable text.
+- **Output**: The method returns the generated text as a string.
+
+#### Inference Before Fine-Tuning
+
+Before you fine-tune your model on a specific dataset, it's insightful to run inference using the pre-trained version of the model. This gives you a baseline understanding of the model's capabilities and helps set expectations for what fine-tuning might achieve:
+
+```python
+# Initialize the FineTuner with your chosen pre-trained model
+fine_tuner = FineTuner(
+    model_id="gpt2",
+    tokenizer_id="gpt2",
+    data=None,  # Data is not required for inference
+    output_dir="./model_output",
+    bnb_config_use=False  # Quantization is optional for initial inference
+)
+
+# Load the pre-trained model and tokenizer
+fine_tuner.load_model_and_tokenizer()
+
+# Generate text using the pre-trained model
 print(fine_tuner.generate_text("The quick brown fox", max_new_tokens=50))
+```
+
+#### Inference After Fine-Tuning
+
+After fine-tuning your model, use the same `generate_text` method to evaluate how the model's text generation has changed. This comparison allows you to directly assess the impact of fine-tuning on the model's performance:
+
+```python
+# Assuming fine-tuning has been completed, and the FineTuner instance is set up
+
+# Generate text using the fine-tuned model
+print(fine_tuner.generate_text("The quick brown fox", max_new_tokens=50))
+```
+
+#### Benefits of Pre- and Post-Fine-Tuning Inference
+
+- **Baseline Comparison**: Generates a clear before-and-after picture of the model's performance, highlighting the benefits of fine-tuning.
+- **Qualitative Evaluation**: Provides an immediate, qualitative sense of improvements in the model's text generation abilities, complementing quantitative metrics like loss and accuracy.
+- **Guidance for Further Training**: Helps in deciding whether further fine-tuning or adjustments to the training process are necessary based on the observed output.
+  
+
+### Conclusion
+
+The `generate_text` method of the `FineTuner` class is a powerful tool for evaluating model performance through text generation. By utilizing it both before and after fine-tuning, you can gain valuable insights into how your training efforts have enhanced the model's capabilities, guiding you towards achieving your desired outcomes.
 ```
 
 ### Methods Overview
@@ -91,57 +145,6 @@ print(fine_tuner.generate_text("The quick brown fox", max_new_tokens=50))
 - `generate_text(text, max_new_tokens=50)`: Generate text based on a given prompt.
 - `prepare_for_kbit_training()`: Prepare the model for k-bit quantization training.
 - `fine_tune()`: Execute the fine-tuning process, wrapping together loading, preparation, and training steps.
-
-  
-### Inference Before Fine-Tuning
-
-To understand how well the pre-trained model performs before fine-tuning it with your specific dataset, you might want to run some inference tests. This can give you a baseline understanding of the model's capabilities and help you assess the improvements made by fine-tuning. Here's how you can use the `FineTuner` class to run inference with the pre-trained model:
-
-#### Step 1: Initialization
-
-Initialize the `FineTuner` class with your desired pre-trained model and tokenizer, similar to how you would set it up for fine-tuning:
-
-```python
-fine_tuner = FineTuner(
-    model_id="gpt2",  # Pre-trained model you wish to test
-    tokenizer_id="gpt2",  # Corresponding tokenizer
-    data=None,  # Data is not required for pre-fine-tuning inference
-    output_dir="./model_output",
-    bnb_config_use=False  # No need for quantization configuration for initial inference
-)
-```
-
-#### Step 2: Load the Model and Tokenizer
-
-Before running inference, load the model and tokenizer. This step is crucial as it prepares the pre-trained model for generating text:
-
-```python
-fine_tuner.load_model_and_tokenizer()
-```
-
-#### Step 3: Generate Text
-
-With the model and tokenizer loaded, you can now generate text using the pre-trained model. This allows you to evaluate the model's performance on tasks similar to what you'll fine-tune it for:
-
-```python
-initial_text = "The quick brown fox"
-generated_text = fine_tuner.generate_text(initial_text, max_new_tokens=50)
-print(f"Generated text: {generated_text}")
-```
-
-### Why Test Inference Pre-Fine-Tuning?
-
-Testing inference before fine-tuning serves several purposes:
-
-1. **Baseline Performance**: It provides a baseline to measure the improvements your fine-tuning brings to the model. You'll have a clear before-and-after picture to evaluate the fine-tuning's effectiveness.
-
-2. **Understanding Model Capabilities**: It helps you understand the capabilities and limitations of the pre-trained model on your specific tasks or domain, guiding adjustments to your fine-tuning process.
-
-3. **Debugging**: It ensures that the model loading and text generation pipeline works as expected, helping to debug potential issues early in the process.
-
-Remember, the quality of the generated text from the pre-trained model might not perfectly align with your task's requirements, which is why fine-tuning is often necessary. However, seeing what the model outputs before any customization can be insightful and help guide your fine-tuning strategy.
-
-
 
 
 ### Contributions
